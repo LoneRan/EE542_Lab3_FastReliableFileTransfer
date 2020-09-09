@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     char *eptr;
     int  opt;
     long fileSize;
-    char destination[20];
+    char destination;
     static struct option long_options[] = {
             {"size",      required_argument,       0,  's' },
             {"destination", required_argument,       0,  'd' },
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
         switch(opt){
             case 'd':
                 sizeValue = optarg;
-                fileSize = strtol(sizeValue,&eptr);
+                fileSize = strtol(sizeValue,&eptr, 20);
                 break;
             case 's':
                 dest = optarg;
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     }
 //todo socket
     pthread_create(&sendData, NULL, SendData, NULL);
-    pthread_create(&sendACK;, NULL, SendACK, NULL);
+    pthread_create(&sendACK, NULL, SendACK, NULL);
     pthread_create(&handleACK, NULL, HandleACK, NULL);
     pthread_create(&retransmit, NULL, Retransmit, NULL);
 

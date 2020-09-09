@@ -14,7 +14,7 @@
 #include <sys/time.h>
 #include <signal.h>
 
-
+struct timeval startAll;
 //receive data from sender
 pthread_t recData;
 //send ACK back for every socket received
@@ -42,13 +42,13 @@ void *Rearrange(){
 
 int main(int argc, char *argv[]) {
 //todo socket
-    pthread_create(&revData, NULL, RevData, NULL);
-    pthread_create(&sendACK;, NULL, SendACK, NULL);
+    pthread_create(&recData, NULL, RecData, NULL);
+    pthread_create(&sendACK, NULL, SendACK, NULL);
     pthread_create(&rearrange, NULL, Rearrange, NULL);
 
     gettimeofday(&startAll, NULL);
 
-    pthread_join(revData, NULL);
+    pthread_join(recData, NULL);
     pthread_join(sendACK, NULL);
     pthread_join(rearrange, NULL);
 
