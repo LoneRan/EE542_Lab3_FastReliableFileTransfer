@@ -1,4 +1,15 @@
 # Fast Reliable File Transfer
-> GFM  Markdown and WYSIWYG Editor - Productive and Extensible
+> Intenert and Cloud Computing Lab3 (Fall 2020)
 
-[![github release version]](https://www.google.com) [![license](https://img.shields.io/github/license/nhn/tui.editor.svg)](https://github.com/nhn/tui.editor/blob/master/LICENSE)
+ [![license](https://img.shields.io/github/license/nhn/tui.editor.svg)](https://github.com/nhn/tui.editor/blob/master/LICENSE)
+
+### Team Member
+
+| Name | URL |
+| --- | --- |
+| Yibo | [`Github Link`](https://github.com/LoneRan) |
+| Yiran | TBD |
+
+## 📜 License
+
+This software is licensed under the [MIT](https://github.com/nhn/tui.editor/blob/master/LICENSE) © [NHN](https://github.com/nhn).
