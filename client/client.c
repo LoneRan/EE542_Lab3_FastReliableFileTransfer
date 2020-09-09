@@ -49,6 +49,44 @@ void *Retransmit(){
 
 
 int main(int argc, char *argv[]) {
+
+    char *sizeValue = "1000";
+    char *dest = "127.0.0.1";
+    char *eptr;
+    int  opt;
+    long fileSize;
+    char destination[20];
+    static struct option long_options[] = {
+            {"size",      required_argument,       0,  's' },
+            {"destination", required_argument,       0,  'd' },
+            {0,          0,                 0,  0   }
+    };
+    int long_index = 0;
+    while((opt = getopt_long_only(argc, argv, "d:s:", long_options, &long_index)) != -1){
+        switch(opt){
+            case 'd':
+                sizeValue = optarg;
+                fileSize = strtol(sizeValue,&eptr);
+                break;
+            case 's':
+                dest = optarg;
+                destination = *dest;
+                break;
+
+            case ':':                           /* error - missing operand */
+                fprintf(stderr, "malformed command\nOption -%c requires an operand\n", optopt);
+                exit(1);
+                break;
+            case '?':                           /* error - unknown option */
+                fprintf(stderr,"malformed command\n");
+                fprintf(stderr,"Usage: %s [-lambda number] [-mu number] [-r number] [-B number] [-P number] [-B number] [-n number]\n", argv[0]);
+                exit(1);
+                break;
+            default:
+                fprintf(stderr,"Usage: %s [-destination ip_addr] [-size number]\n", argv[0]);
+                exit(1);
+        }
+    }
 //todo socket
     pthread_create(&sendData, NULL, SendData, NULL);
     pthread_create(&sendACK;, NULL, SendACK, NULL);
