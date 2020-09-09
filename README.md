@@ -7,8 +7,8 @@
 
 | Name | URL |
 | --- | --- |
-| Yibo | [`Github Link`](https://github.com/LoneRan) |
-| Yiran | TBD |
+| Yibo Wag| [`Github Link`](https://github.com/LoneRan) |
+| Yiran Jiang| [`Github Link`](https://github.com/Yiran-Jiang) |
 
 ## 📜 License
 
