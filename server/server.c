@@ -7,3 +7,5 @@
 #include <stdlib.h>
 #include <mutex.h>
 #include <math.h>
+
+//todo main and inplement multithreads
