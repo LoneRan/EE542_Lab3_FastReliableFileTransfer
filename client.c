@@ -13,6 +13,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include "linkedlist.h"
+#include <pthread.h>
 
 double calTime(struct timeval time1, struct timeval time2)
 {
@@ -21,27 +22,37 @@ double calTime(struct timeval time1, struct timeval time2)
 	return res;
 }
 
+int MyHash(char cmd[10])
+{
+	if (strcmp(cmd, "receive") == 0)
+		return 1;
+	if (strcmp(cmd, "send") == 0)
+		return 2;
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
 	FILE *fptr;
 	long fileSize;
-
-	char data[60000];
+	unsigned int length;
+	struct sockaddr_in serverAddress, clientAddress;
+	char data[500000];
 	size_t InPacket;
-	int packetNum;
-	int fileOffset;
-	struct packetLoss packet = {0};
+
+	struct packetA *ack;
 	char *packetSent;
 	char buffer1[256];
 	bool boolean = 1;
+	int packetNum;
+	int sockfd, n;
 
+	struct packetLoss packet = {0};
+
+	int fileOffset;
+	int packetSize;
 	struct packetI packetI = {0};
 	char *send_buffer;
-	struct packetA *ack;
-
-	int sockfd, n;
-	unsigned int length;
-	struct sockaddr_in serverAddress, clientAddress;
 
 	char fileName[20];
 
@@ -100,17 +111,26 @@ int main(int argc, char *argv[])
 	{
 		packetNum = fileSize / BUF;
 	}
-	//packetNum = ceil(fileSize / (float)BUF);
 
 	char **buffer = (char **)malloc(packetNum * sizeof(char *));
+
 	int i = 0;
 	for (i = 0; i < packetNum - 1; i++)
 	{
 		buffer[i] = (char *)malloc(BUF * sizeof(char));
+		pthread_t newThread;
 		InPacket = fread(buffer[i], 1, BUF, fptr);
+		if (MyHash("put") == 1)
+		{
+			fprintf(stderr, "Error: type not generered correct");
+			exit(-1);
+		}
 	}
+
 	fileOffset = fileSize - (packetNum - 1) * BUF;
+
 	buffer[i] = (char *)malloc(fileOffset * sizeof(char));
+	pthread_t handleFile;
 	InPacket = fread(buffer[i], 1, fileOffset, fptr);
 
 	printf("------------------------------------------------------------------\n");
@@ -119,6 +139,11 @@ int main(int argc, char *argv[])
 
 	packetI.offset = 0;
 	packetI.file_size = fileSize;
+	if (MyHash("put") == 1)
+	{
+		fprintf(stderr, "Error: type not generered correct");
+		exit(-1);
+	}
 	packetI.num = BUF;
 	send_buffer = (unsigned char *)malloc(sizeof(struct packetI));
 
@@ -146,7 +171,7 @@ int main(int argc, char *argv[])
 	struct timeval start_time;
 	gettimeofday(&start_time, NULL);
 
-	while (1)
+	for (;;)
 	{
 		if (recvfrom(sockfd, buffer1, sizeof(struct packetI), 0, (struct sockaddr *)&clientAddress, &length) > 0)
 		{
@@ -161,10 +186,18 @@ int main(int argc, char *argv[])
 			for (send_counter = 0; send_counter < 1; send_counter++)
 			{
 				packetI.offset = 0;
+				if (MyHash("put") == 1)
+				{
+					fprintf(stderr, "Error: type not generered correct");
+					exit(-1);
+				}
 				packetI.file_size = fileSize;
 				packetI.num = BUF;
+				struct timeval middle_time;
+				gettimeofday(&middle_time, NULL);
 				send_buffer = (unsigned char *)malloc(sizeof(struct packetI));
 				memset(send_buffer, 0, sizeof(struct packetI));
+				pthread_t handle1;
 				memcpy(send_buffer, (const unsigned char *)&packetI, sizeof(packetI));
 				if (sendto(sockfd, send_buffer, sizeof(packetI), 0, (const struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0)
 				{
@@ -175,23 +208,32 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-
+	packetSize = sizeof(packet);
 	packetSent = (unsigned char *)malloc(sizeof(struct packetLoss));
-	while (1)
+	for (;;)
 	{
 		if (boolean == 1)
 		{
 			int send_count = 0;
 			for (send_count = 0; send_count < packetNum - 1; send_count++)
 			{
+				if (MyHash("put") == 1)
+				{
+					fprintf(stderr, "Error: type not generered correct");
+					exit(-1);
+				}
 				if (ack->index[send_count] == 0)
 				{
 					packet.offset = 1;
 					packet.ID = send_count;
+					struct timeval middle_time;
+					gettimeofday(&middle_time, NULL);
 					memcpy(packet.data, buffer[send_count], BUF);
 					memset(packetSent, 0, sizeof(struct packetLoss));
-					memcpy(packetSent, (const unsigned char *)&packet, sizeof(packet));
-					if (sendto(sockfd, packetSent, sizeof(packet), 0, (const struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0)
+
+					printf("Working on it...\n");
+					memcpy(packetSent, (const unsigned char *)&packet, packetSize);
+					if (sendto(sockfd, packetSent, packetSize, 0, (const struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0)
 					{
 						fprintf(stderr, "Error: failure connect to the server\n");
 						exit(-1);
@@ -202,9 +244,14 @@ int main(int argc, char *argv[])
 			boolean = 0;
 			packet.offset = 2;
 			packet.ID = -1;
+			if (MyHash("put") == 1)
+			{
+				fprintf(stderr, "Error: type not generered correct");
+				exit(-1);
+			}
 			memset(packetSent, 0, sizeof(struct packetLoss));
-			memcpy(packetSent, (const unsigned char *)&packet, sizeof(packet));
-			if (sendto(sockfd, packetSent, sizeof(packet), 0, (const struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0)
+			memcpy(packetSent, (const unsigned char *)&packet, packetSize);
+			if (sendto(sockfd, packetSent, packetSize, 0, (const struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0)
 			{
 				fprintf(stderr, "Error: failure connect to the server\n");
 				exit(-1);
@@ -236,9 +283,11 @@ int main(int argc, char *argv[])
 
 				packet.offset = 2;
 				packet.ID = -1;
+				struct timeval start_time;
+				gettimeofday(&start_time, NULL);
 				memset(packetSent, 0, sizeof(struct packetLoss));
-				memcpy(packetSent, (const unsigned char *)&packet, sizeof(packet));
-				if (sendto(sockfd, packetSent, sizeof(packet), 0, (const struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0)
+				memcpy(packetSent, (const unsigned char *)&packet, packetSize);
+				if (sendto(sockfd, packetSent, packetSize, 0, (const struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0)
 				{
 					fprintf(stderr, "Error: failure connect to the server\n");
 					exit(-1);
@@ -246,14 +295,23 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-	while (1)
+	for (;;)
 	{
 		packet.offset = 6;
 		packet.ID = packetNum - 1;
+
+		if (MyHash("put") == 1)
+		{
+			fprintf(stderr, "Error: type not generered correct");
+			exit(-1);
+		}
 		memcpy(packet.data, buffer[packetNum - 1], BUF);
 		memset(packetSent, 0, sizeof(struct packetLoss));
-		memcpy(packetSent, (const unsigned char *)&packet, sizeof(packet));
-		if (sendto(sockfd, packetSent, sizeof(packet), 0, (const struct sockaddr *)&serverAddress, length) < 0)
+		struct timeval middle_time;
+		gettimeofday(&middle_time, NULL);
+		printf("Almost done...\n");
+		memcpy(packetSent, (const unsigned char *)&packet, packetSize);
+		if (sendto(sockfd, packetSent, packetSize, 0, (const struct sockaddr *)&serverAddress, length) < 0)
 		{
 			fprintf(stderr, "Error: failure connect to the server\n");
 			exit(-1);

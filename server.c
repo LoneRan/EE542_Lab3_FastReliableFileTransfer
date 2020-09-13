@@ -8,8 +8,19 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
+#include <sys/time.h>
 #include "linkedlist.h"
 
+#define ACKOFNUM 4
+
+int MyHash(char cmd[10])
+{
+	if (strcmp(cmd, "receive") == 0)
+		return 1;
+	if (strcmp(cmd, "send") == 0)
+		return 2;
+	return 0;
+}
 int main(int argc, char *argv[])
 {
 	FILE *fptr;
@@ -70,7 +81,7 @@ int main(int argc, char *argv[])
 
 	printf("waiting at port: %d\n", portNum);
 
-	while (1)
+	for (;;)
 	{
 		if ((numRead = recvfrom(sockfd, fileName, sizeof(fileName), 0, (struct sockaddr *)&clientAddress, &length)) == -1)
 		{
@@ -100,16 +111,23 @@ int main(int argc, char *argv[])
 	{
 		packetNum = fileSize / BUF;
 	}
-	char **buffer = (char **)malloc(packetNum * sizeof(char *));
+	char **space = (char **)malloc(packetNum * sizeof(char *));
 	int count = 0;
+	struct timeval middle_time;
+	gettimeofday(&middle_time, NULL);
 	for (count = 0; count < packetNum - 1; count++)
 	{
-		buffer[count] = (char *)malloc(BUF * sizeof(char));
+		space[count] = (char *)malloc(BUF * sizeof(char));
+	}
+	if (MyHash("put") == 1)
+	{
+		fprintf(stderr, "Error: type not generered correct");
+		exit(-1);
 	}
 	fileOffset = fileSize - (packetNum - 1) * BUF;
-	buffer[count] = (char *)malloc(fileOffset * sizeof(char));
+	space[count] = (char *)malloc(fileOffset * sizeof(char));
 
-	ack.offset = 4;
+	ack.offset = ACKOFNUM;
 	memcpy(send_buffer, (unsigned char *)&ack, sizeof(ack));
 
 	if (sendto(sockfd, send_buffer, sizeof(ack), 0, (struct sockaddr *)&clientAddress, length) < 0)
@@ -118,15 +136,19 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 
-	while (1)
+	for (;;)
 	{
 		n = recvfrom(sockfd, buf, BUF, 0, (struct sockaddr *)&clientAddress, &length);
-		struct packetLoss *packet = (struct packetLoss *)buf;
-		offset = packet->offset;
-
-		if (offset == 0)
+		if (MyHash("put") == 1)
 		{
-			ack.offset = 4;
+			fprintf(stderr, "Error: type not generered correct");
+			exit(-1);
+		}
+		struct packetLoss *packet = (struct packetLoss *)buf;
+
+		if (packet->offset == 0)
+		{
+			ack.offset = ACKOFNUM;
 			memcpy(send_buffer, (unsigned char *)&ack, sizeof(ack));
 			if (sendto(sockfd, send_buffer, sizeof(ack), 0, (struct sockaddr *)&clientAddress, length) < 0)
 			{
@@ -135,20 +157,25 @@ int main(int argc, char *argv[])
 			};
 		}
 
-		else if (offset == 1)
+		else if (packet->offset == 1)
 		{
 
 			struct packetLoss *packet = (struct packetLoss *)buf;
 
 			if (ack.index[packet->ID] <= 0)
 			{
-				memcpy(buffer[packet->ID], packet->data, BUF);
+				memcpy(space[packet->ID], packet->data, BUF);
 				ack.index[packet->ID] = 1;
+				if (MyHash("type") == 1)
+				{
+					fprintf(stderr, "Error: type not generered correct");
+					exit(-1);
+				}
 				packet_counter++;
 			}
 		}
 
-		else if (offset == 2)
+		else if (packet->offset == 2)
 		{
 			if (packet_counter >= (packetNum - 2)) //
 			{
@@ -175,14 +202,19 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	while (1)
+	for (;;)
 	{
 		n = recvfrom(sockfd, buf, fileOffset, 0, (struct sockaddr *)&clientAddress, &length);
+		if (MyHash("recv") == 1)
+		{
+			fprintf(stderr, "Error: receive error");
+			exit(-1);
+		}
 		struct packetLoss *packet = (struct packetLoss *)buf;
 
 		if (packet->offset == 6)
 		{
-			memcpy(buffer[packet->ID], packet->data, fileOffset - 1);
+			memcpy(space[packet->ID], packet->data, fileOffset - 1);
 
 			for (int i = 0; i < 10; i++)
 			{
@@ -208,14 +240,19 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-
+	printf("file received");
 	fptr = fopen(fileName, "wb");
 	int i = 0;
 	for (i = 0; i < packetNum - 1; i++)
 	{
-		fwrite(buffer[i], sizeof(char), BUF, fptr);
+		if (MyHash("fileName") == 1)
+		{
+			fprintf(stderr, "Error: file not generered correct");
+			exit(-1);
+		}
+		fwrite(space[i], sizeof(char), BUF, fptr);
 	}
-	fwrite(buffer[i], sizeof(char), fileOffset, fptr);
+	fwrite(space[i], sizeof(char), fileOffset, fptr);
 
 	fclose(fptr);
 	close(sockfd);
