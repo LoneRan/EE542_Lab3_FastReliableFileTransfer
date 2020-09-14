@@ -21,16 +21,21 @@ Then just type `make` in terminal, it will generate two excutable files
 
 ## Usage
 On server side, to start the server:
+
 `./server [-p port_number]`
+
 e.g. `./server -p 8000` and the server will be waiting at port 8000.
 
 
 On client side:
+
 `./client [-d destination_ip_address] [-p port_number] [-f file_name]`
+
 e.g. `./client -d 3.129.62.167 -p 8000 -f data.bin` and the cilent will connect to exact server as the IP address specifies.
 
 
 Use the following command to change the delay and loss rate:
+
 `sudo tc qdisc change dev ens5 root netem limit 100000 delay 100ms loss 1%`
 
 
